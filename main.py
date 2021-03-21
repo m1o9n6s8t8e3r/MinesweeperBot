@@ -2,6 +2,9 @@ import numpy as np
 from PIL import Image, ImageGrab
 import cv2
 import pyautogui
+import pytesseract
+
+pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 
 pyautogui.PAUSE = .05
 
@@ -85,23 +88,52 @@ while True:
     grayscreen = np.array(cv2.cvtColor(screen, cv2.COLOR_RGB2GRAY))
     #print(grayscreen)
     grid = (grayscreen == lineColor).astype(np.uint8)
-    vertical_lines = []
+    vertical_lines = [0]
     for i in range(blocksize * width):
         if (grid[0][i] == 1):
             vertical_lines.append(i)
-    horizontal_lines = []
+    horizontal_lines = [0]
     for j in range(blocksize * height):
         if (grid[j][0] == 1):
             horizontal_lines.append(j)
     print(vertical_lines)
     print(horizontal_lines)
-    grid = (grid * 153)
-    print(grayscreen.dtype)
-    print(grayscreen)
-    print(grid)
+    
     cv2.imshow("hey", grayscreen)
-    cv2.imshow("grid", grid)
     cv2.waitKey(0)
+    #Printing Gird
+    #grid = (grid * 153)
+    #print(grayscreen)
+    #print(grid)
+    #cv2.imshow("grid", grid)
+    print(width, len(vertical_lines))
+    print(height, len(horizontal_lines))
+    cong = r'--oem 3 --psm 10 outputbase digits'
+    s = ""
+    for j in range(height):
+        for i in range(width):
+            screenX = vertical_lines[i] + 1
+            screenY = horizontal_lines[j] + 1
+            color = grayscreen[screenY][screenX]
+            if color == whiteColor:
+                #s += "C"
+                digit_image = np.array(grayscreen[screenY:screenY+blocksize, screenX:screenX+blocksize])
+                cv2.imshow("4row5col", digit_image)
+                #data = pytesseract.image_to_data(digit_image, config=cong)
+                badumtss = pytesseract.image_to_string(digit_image, config=cong)
+                #print(data)
+                try: 
+                    digit = int(badumtss)
+                    s += str(digit)
+                except:
+                    s += "C"
+
+            elif color == blackColor:
+                s += "B"
+            else:
+                s += "N"
+        s += "\n"
+    print(s)
     #print("Screen")
     #print(getScreenString())
     #clickClear()
